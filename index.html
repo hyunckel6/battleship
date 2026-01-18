@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚓ لعبة المعركة البحرية - Twitch</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #1a2332 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        .waves {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 200px; z-index: 0; opacity: 0.1;
+        }
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 200%; height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="%23ffffff"/></svg>') repeat-x;
+            animation: wave 25s linear infinite;
+        }
+        .wave:nth-child(2) { opacity: 0.5; animation: wave 20s linear infinite reverse; }
+        @keyframes wave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .container { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 20px; }
+        .header {
+            text-align: center; margin-bottom: 30px; padding: 30px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 20px; border: 2px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2); backdrop-filter: blur(10px);
+        }
+        .header h1 {
+            font-size: 3em; margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+            animation: glow 2s ease-in-out infinite;
+        }
+        @keyframes glow { 0%, 100% { text-shadow: 0 0 20px rgba(99, 102, 241, 0.8); } 50% { text-shadow: 0 0 30px rgba(139, 92, 246, 1); } }
+        .status-badge {
+            display: inline-block; padding: 10px 20px;
+            background: rgba(34, 197, 94, 0.2); border: 2px solid #22c55e;
+            border-radius: 25px; font-weight: bold;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        .login-container {
+            max-width: 500px; margin: 100px auto;
+            background: rgba(30, 41, 59, 0.9); padding: 40px;
+            border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+        }
+        .login-container h2 { font-size: 2em; margin-bottom: 30px; text-align: center; color: #818cf8; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: bold; color: #cbd5e1; }
+        .form-group input {
+            width: 100%; padding: 15px;
+            background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px; color: white; font-size: 1em; transition: all 0.3s;
+        }
+        .form-group input:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 20px rgba(129, 140, 248, 0.3); }
+        .form-group small { display: block; margin-top: 8px; color: #94a3b8; font-size: 0.85em; }
+        .form-group small a { color: #818cf8; text-decoration: none; }
+        .btn {
+            width: 100%; padding: 15px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none; border-radius: 10px; color: white;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+            transition: all 0.3s; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6); }
+        .commands-info {
+            margin-top: 30px; padding: 20px;
+            background: rgba(15, 23, 42, 0.8); border-radius: 10px;
+            border: 2px solid rgba(99, 102, 241, 0.2);
+        }
+        .commands-info h3 { margin-bottom: 15px; color: #818cf8; }
+        .commands-info ul { list-style: none; }
+        .commands-info li { padding: 8px 0; color: #cbd5e1; }
+        .commands-info code {
+            background: rgba(99, 102, 241, 0.2); padding: 4px 10px;
+            border-radius: 5px; color: #a5b4fc; font-family: 'Courier New', monospace;
+        }
+        .game-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; margin-top: 20px; }
+        .sidebar {
+            background: rgba(30, 41, 59, 0.9); border-radius: 20px; padding: 25px;
+            border: 2px solid rgba(99, 102, 241, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            height: fit-content;
+        }
+        .sidebar h2 { font-size: 1.5em; margin-bottom: 20px; color: #818cf8; display: flex; align-items: center; gap: 10px; }
+        .queue-list { max-height: 400px; overflow-y: auto; }
+        .queue-item {
+            background: rgba(15, 23, 42, 0.8); padding: 15px; margin-bottom: 10px;
+            border-radius: 10px; border-right: 4px solid #818cf8;
+            display: flex; align-items: center; gap: 10px; transition: all 0.3s;
+        }
+        .queue-item:hover { transform: translateX(-5px); box-shadow: 0 4px 15px rgba(129, 140, 248, 0.3); }
+        .queue-number {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            width: 35px; height: 35px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .empty-queue { text-align: center; padding: 40px 20px; color: #64748b; }
+        .game-area {
+            background: rgba(30, 41, 59, 0.9); border-radius: 20px; padding: 30px;
+            border: 2px solid rgba(99, 102, 241, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .game-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; padding: 20px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 15px; border: 2px solid rgba(99, 102, 241, 0.3);
+        }
+        .players-vs { font-size: 1.8em; font-weight: bold; color: #a5b4fc; }
+        .timer {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(15, 23, 42, 0.8); padding: 15px 25px;
+            border-radius: 10px; font-size: 1.5em; font-weight: bold;
+            border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+        .timer.warning { animation: pulse 1s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .turn-indicator {
+            text-align: center; padding: 15px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 10px; font-size: 1.3em; font-weight: bold;
+            margin-bottom: 30px; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+        .boards-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px; justify-items: center;
+        }
+        .board-wrapper { text-align: center; }
+        .board-title {
+            font-size: 1.5em; font-weight: bold; margin-bottom: 15px; padding: 10px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+            border-radius: 10px; color: #a5b4fc;
+        }
+        .board {
+            display: inline-grid; grid-template-columns: repeat(11, 40px);
+            grid-template-rows: repeat(11, 40px); gap: 3px;
+            background: rgba(15, 23, 42, 0.8); padding: 15px;
+            border-radius: 15px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        .cell {
+            width: 40px; height: 40px; border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.9em; transition: all 0.3s;
+        }
+        .cell.header { background: rgba(99, 102, 241, 0.3); color: #a5b4fc; font-size: 1.1em; }
+        .cell.water { background: linear-gradient(135deg, #1e40af, #1e3a8a); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3); }
+        .cell.ship { background: linear-gradient(135deg, #059669, #047857); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(5, 150, 105, 0.5); }
+        .cell.hit { background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 0 20px rgba(220, 38, 38, 0.8); animation: hit 0.5s ease-out; }
+        @keyframes hit { 0% { transform: scale(0.5); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .cell.miss { background: linear-gradient(135deg, #475569, #334155); }
+        .waiting-state { text-align: center; padding: 100px 20px; }
+        .waiting-icon { font-size: 5em; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .waiting-state h2 { font-size: 2em; color: #64748b; margin-bottom: 10px; }
+        .waiting-state p { color: #475569; font-size: 1.2em; }
+        .event-log {
+            margin-top: 30px; background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px; padding: 25px;
+            border: 2px solid rgba(99, 102, 241, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .event-log h2 { font-size: 1.5em; margin-bottom: 20px; color: #818cf8; }
+        .log-container { max-height: 250px; overflow-y: auto; }
+        .log-item {
+            background: rgba(15, 23, 42, 0.8); padding: 12px 15px;
+            margin-bottom: 10px; border-radius: 8px;
+            border-right: 3px solid #6366f1; animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
+        @media (max-width: 1200px) {
+            .game-layout { grid-template-columns: 1fr; }
+            .boards-container { grid-template-columns: 1fr; }
+            .board { grid-template-columns: repeat(11, 35px); grid-template-rows: repeat(11, 35px); }
+            .cell { width: 35px; height: 35px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="waves"><div class="wave"></div><div class="wave"></div></div>
+    <div class="container">
+        <div id="loginScreen" class="login-container">
+            <h2>⚓ لعبة المعركة البحرية</h2>
+            <div class="form-group">
+                <label>اسم القناة</label>
+                <input type="text" id="channelInput" placeholder="اسم قناتك على Twitch">
+            </div>
+            <div class="form-group">
+                <label>OAuth Token</label>
+                <input type="password" id="tokenInput" placeholder="your_token_here">
+                <small>احصل على التوكن من: <a href="https://twitchtokengenerator.com" target="_blank">Twitch Token Generator</a></small>
+            </div>
+            <button class="btn" onclick="connectTwitch()">اتصل بـ Twitch</button>
+            <div class="commands-info">
+                <h3>📋 أوامر اللعبة:</h3>
+                <ul>
+                    <li><code>!دخول</code> - الانضمام لقائمة الانتظار</li>
+                    <li><code>!اقصف ا5</code> - قصف إحداثيات</li>
+                    <li><code>!استسلام</code> - الاستسلام والخروج</li>
+                    <li><code>!مغادرة</code> - مغادرة قائمة الانتظار</li>
+                </ul>
+            </div>
+        </div>
+        <div id="gameScreen" style="display: none;">
+            <div class="header">
+                <h1>⚓ معركة البحر على Twitch</h1>
+                <div class="status-badge" id="statusBadge">متصل</div>
+            </div>
+            <div class="game-layout">
+                <div class="sidebar">
+                    <h2>👥 قائمة الانتظار</h2>
+                    <div class="queue-list" id="queueList">
+                        <div class="empty-queue"><div style="font-size: 3em; margin-bottom: 10px;">⏳</div><p>لا يوجد لاعبون</p></div>
+                    </div>
+                </div>
+                <div class="game-area">
+                    <div id="gameContent">
+                        <div class="waiting-state"><div class="waiting-icon">🎯</div><h2>في انتظار اللاعبين...</h2><p>اكتب !دخول في الشات للانضمام</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="event-log">
+                <h2>📜 سجل الأحداث</h2>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+var G=10,C=['ا','ب','ج','د','ه','و','ز','ح','ط','ي'],S=[{name:'حاملة طائرات',size:5,nameEn:'carrier'},{name:'مدمرة',size:4,nameEn:'battleship'},{name:'طراد',size:3,nameEn:'cruiser'},{name:'غواصة',size:3,nameEn:'submarine'},{name:'زورق',size:2,nameEn:'destroyer'}];
+var ws=null,ch='',q=[],cg=null,tt=30,ti=null;
+function log(m){var l=document.getElementById('logContainer'),i=document.createElement('div');i.className='log-item';i.textContent=m;l.insertBefore(i,l.firstChild);while(l.children.length>10)l.removeChild(l.lastChild);}
+function cb(){var b=[],s=[],i,j;for(i=0;i<G;i++){b.push([]);for(j=0;j<G;j++)b[i].push(null);}for(i=0;i<S.length;i++){var sh=S[i],p=false;while(!p){var h=Math.random()>.5,r=Math.floor(Math.random()*G),c=Math.floor(Math.random()*G);if(cp(b,r,c,sh.size,h)){ps(b,r,c,sh.size,h,sh.nameEn);s.push({name:sh.name,size:sh.size,nameEn:sh.nameEn,positions:gp(r,c,sh.size,h)});p=true;}}}return{board:b,ships:s,hits:[],misses:[]};}
+function cp(b,r,c,z,h){var i;if(h){if(c+z>G)return false;for(i=0;i<z;i++)if(b[r][c+i])return false;}else{if(r+z>G)return false;for(i=0;i<z;i++)if(b[r+i][c])return false;}return true;}
+function ps(b,r,c,z,h,n){var i;if(h){for(i=0;i<z;i++)b[r][c+i]=n;}else{for(i=0;i<z;i++)b[r+i][c]=n;}}
+function gp(r,c,z,h){var p=[],i;if(h){for(i=0;i<z;i++)p.push(r+','+(c+i));}else{for(i=0;i<z;i++)p.push((r+i)+','+c);}return p;}
+function pc(co){var m=co.match(/^([ا-ي])(\d+)$/);if(!m)return null;var c=C.indexOf(m[1]),r=parseInt(m[2])-1;if(c===-1||r<0||r>=G)return null;return{row:r,col:c};}
+function rb(d,o){var h='<div class="board"><div class="cell header"></div>',i,j;for(i=0;i<C.length;i++)h+='<div class="cell header">'+C[i]+'</div>';for(i=0;i<G;i++){h+='<div class="cell header">'+(i+1)+'</div>';for(j=0;j<G;j++){var k=i+','+j,ih=d.hits.indexOf(k)!==-1,im=d.misses.indexOf(k)!==-1,hs=d.board[i][j],cc='cell water',ct='';if(ih){cc='cell hit';ct='💥';}else if(im){cc='cell miss';ct='○';}else if(!o&&hs)cc='cell ship';h+='<div class="'+cc+'">'+ct+'</div>';}}h+='</div>';return h;}
+function uq(){var l=document.getElementById('queueList');if(q.length===0)l.innerHTML='<div class="empty-queue"><div style="font-size: 3em; margin-bottom: 10px;">⏳</div><p>لا يوجد لاعبون</p></div>';else{var h='',i;for(i=0;i<q.length;i++)h+='<div class="queue-item"><div class="queue-number">'+(i+1)+'</div><div>'+q[i]+'</div></div>';l.innerHTML=h;}}
+function ug(){var c=document.getElementById('gameContent');if(!cg){c.innerHTML='<div class="waiting-state"><div class="waiting-icon">🎯</div><h2>في انتظار اللاعبين...</h2><p>اكتب !دخول في الشات للانضمام</p></div>';return;}var tc=tt<=10?'timer warning':'timer';c.innerHTML='<div class="game-header"><div class="players-vs">'+cg.player1+' ⚔️ '+cg.player2+'</div><div class="'+tc+'">⏱️ '+tt+'s</div></div><div class="turn-indicator">🎯 دور: '+cg.turn+'</div><div class="boards-container"><div class="board-wrapper"><div class="board-title">'+cg.player1+'</div>'+rb(cg.player1Data,false)+'</div><div class="board-wrapper"><div class="board-title">'+cg.player2+'</div>'+rb(cg.player2Data,false)+'</div></div>';}
+function sm(m){if(ws&&ws.readyState===WebSocket.OPEN)ws.send('PRIVMSG #'+ch+' :'+m);}
+function sg(){if(q.length<2)return;var p1=q[0],p2=q[1];q=q.slice(2);uq();cg={player1:p1,player2:p2,player1Data:cb(),player2Data:cb(),turn:p1};tt=30;st();ug();sm('⚓ بدأت المعركة! '+p1+' ضد '+p2+' | دور '+p1);log('لعبة جديدة: '+p1+' ضد '+p2);}
+function st(){if(ti)clearInterval(ti);ti=setInterval(function(){tt--;ug();if(tt<=0){var n=cg.turn===cg.player1?cg.player2:cg.player1;sm('⏰ انتهى وقت @'+cg.turn+'! دور @'+n);cg.turn=n;tt=30;ug();}},1000);}
+function eg(){cg=null;tt=30;if(ti)clearInterval(ti);ug();}
+function pa(p,co){if(!cg||cg.turn!==p)return;var pr=pc(co);if(!pr){sm('@'+p+' إحداثيات خاطئة! استخدم مثال: !اقصف ا5');return;}var r=pr.row,c=pr.col,op=cg.turn===cg.player1?'player2':'player1',od=cg[op+'Data'],k=r+','+c;if(od.hits.indexOf(k)!==-1||od.misses.indexOf(k)!==-1){sm('@'+p+' تم قصف هذا الموقع من قبل!');return;}var cl=od.board[r][c],cd=C[c]+(r+1);if(cl){od.hits.push(k);var sh=null,i;for(i=0;i<od.ships.length;i++)if(od.ships[i].nameEn===cl){sh=od.ships[i];break;}var hc=0;for(i=0;i<sh.positions.length;i++)if(od.hits.indexOf(sh.positions[i])!==-1)hc++;if(hc===sh.size)sm('💥 @'+p+' أغرق '+sh.name+'! ('+cd+')');else sm('🎯 @'+p+' إصابة في '+cd+'!');if(od.hits.length===17){sm('🏆 @'+p+' فاز باللعبة!');log(p+' فاز!');eg();return;}}else{od.misses.push(k);sm('💨 @'+p+' خطأ في '+cd);}cg.turn=op===cg.player1?cg.player1:cg.player2;tt=30;ug();}
+function connectTwitch(){ch=document.getElementById('channelInput').value.trim();var tk=document.getElementById('tokenInput').value.trim();if(!ch||!tk){alert('الرجاء إدخال اسم القناة والتوكن');return;}tk=tk.replace(/^oauth:/,'');ws=new WebSocket('wss://irc-ws.chat.twitch.tv:443');ws.onopen=function(){ws.send('PASS oauth:'+tk);ws.send('NICK '+ch);ws.send('JOIN #'+ch);};ws.onmessage=function(e){var m=e.data;if(m.includes('PING')){ws.send('PONG :tmi.twitch.tv');return;}if(m.includes('PRIVMSG')){var u=m.match(/:(\w+)!/),t=m.match(/PRIVMSG #\w+ :(.+)/);if(u&&t){var un=u[1],tx=t[1].trim();if(tx==='!دخول'||tx==='!join'){if(cg&&(cg.player1===un||cg.player2===un))sm('@'+un+' أنت تلعب حالياً!');else if(q.indexOf(un)!==-1)sm('@'+un+' أنت في قائمة الانتظار!');else{q.push(un);uq();sm('@'+un+' انضم للانتظار! ('+q.length+' في القائمة)');log(un+' انضم للقائمة');if(!cg&&q.length>=2)setTimeout(sg,2000);}}else if(tx==='!مغادرة'||tx==='!leave'){q=q.filter(function(x){return x!==un;});uq();sm('@'+un+' غادر قائمة الانتظار');}else if(tx.startsWith('!اقصف ')||tx.startsWith('!fire ')){var co=tx.split(' ')[1];if(co)pa(un,co);}else if(tx==='!استسلام'||tx==='!forfeit'){if(cg&&(cg.player1===un||cg.player2===un)){var w=cg.player1===un?cg.player2:cg.player1;sm('🏳️ @'+un+' استسلم! @'+w+' فاز!');eg();}}}}if(m.includes('Welcome, GLHF!')){document.getElementById('loginScreen').style.display='none';document.getElementById('gameScreen').style.display='block';document.getElementById('statusBadge').textContent='متصل: '+ch;log('متصل بـ Twitch!');}};ws.onerror=function(){log('خطأ في الاتصال');alert('فشل الاتصال! تأكد من التوكن واسم القناة');};ws.onclose=function(){log('انقطع الاتصال');};}
+    </script>
+</body>
+</html>
